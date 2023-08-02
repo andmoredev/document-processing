@@ -25,7 +25,6 @@ jobs:
     needs: [lint, unit-tests]
     uses: ./.github/workflows/shared-deploy.yaml
     with:
-      ENVIRONMENT: prod
       AWS_REGION: us-east-1
       PIPELINE_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandbox-PipelineExecutionRole-V9GPS7D411KV
       CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandb-CloudFormationExecutionR-10QAL3GZ9NUL6
@@ -37,7 +36,6 @@ jobs:
     needs: [deploy-resources]
     uses: ./.github/workflows/shared-test-api.yaml
     with:
-      ENVIRONMENT : prod
       AWS_REGION: us-east-1
       PIPELINE_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandbox-PipelineExecutionRole-V9GPS7D411KV
     secrets: inherit

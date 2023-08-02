@@ -3,9 +3,6 @@ name: Build and Deploy artifacts for a given input environment
 on:
   workflow_call:
     inputs:
-      ENVIRONMENT:
-        required: true
-        type: string
       AWS_REGION:
         required: true
         type: string
