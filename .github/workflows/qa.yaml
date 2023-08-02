@@ -25,6 +25,7 @@ jobs:
     needs: [lint, unit-tests]
     permissions:
       id-token: write
+      contents: read
     uses: ./.github/workflows/shared-deploy.yaml
     with:
       AWS_REGION: us-east-1
