@@ -36,6 +36,9 @@ jobs:
   test-api:
     name: Test API
     needs: [deploy-resources]
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/shared-test-api.yaml
     with:
       AWS_REGION: us-east-1
