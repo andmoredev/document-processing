@@ -1,0 +1,35 @@
+name: Portman Tests
+
+on:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        required: true
+        type: string
+      PIPELINE_EXECUTION_ROLE:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  portman:
+    name: Run Portman
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ inputs.AWS_REGION }}
+          role-to-assume: ${{ inputs.PIPELINE_EXECUTION_ROLE }}
+          role-session-name: testing-packaging
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Test API
+        run: |
+          url=$(aws cloudformation describe-stacks --stack-name document-processing --query "Stacks[0].Outputs[?OutputKey=='ApiURL'].OutputValue" --output text)
+          npx @apideck/portman --baseUrl $url --cliOptionsFile portman/portman-cli.json

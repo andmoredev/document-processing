@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "document-processing"
+capabilities = "CAPABILITY_IAM"
+
+[default.build]
+[default.build.parameters]
+cached="true"
+parallel="true"

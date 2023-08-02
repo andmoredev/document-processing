@@ -1,0 +1,43 @@
+name: QA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  lint:
+    name: Lint
+    uses: ./.github/workflows/shared-lint.yaml
+    secrets: inherit
+
+  unit-tests:
+    name: Unit Tests
+    uses: ./.github/workflows/shared-unit-tests.yaml
+    secrets: inherit
+
+  deploy-resources:
+    name: Deploy SAM Resources
+    needs: [lint, unit-tests]
+    uses: ./.github/workflows/shared-deploy.yaml
+    with:
+      ENVIRONMENT: prod
+      AWS_REGION: us-east-1
+      PIPELINE_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandbox-PipelineExecutionRole-V9GPS7D411KV
+      CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandb-CloudFormationExecutionR-10QAL3GZ9NUL6
+      ARTIFACTS_BUCKET_NAME: aws-sam-cli-managed-sandbox-pipel-artifactsbucket-1bnm6n57ftui
+    secrets: inherit
+
+  test-api:
+    name: Test API
+    needs: [deploy-resources]
+    uses: ./.github/workflows/shared-test-api.yaml
+    with:
+      ENVIRONMENT : prod
+      AWS_REGION: us-east-1
+      PIPELINE_EXECUTION_ROLE: arn:aws:iam::965116670064:role/aws-sam-cli-managed-sandbox-PipelineExecutionRole-V9GPS7D411KV
+    secrets: inherit

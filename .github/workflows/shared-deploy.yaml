@@ -1,0 +1,51 @@
+name: Build and Deploy artifacts for a given input environment
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+      PIPELINE_EXECUTION_ROLE:
+        required: true
+        type: string
+      CLOUDFORMATION_EXECUTION_ROLE:
+        required: true
+        type: string
+      ARTIFACTS_BUCKET_NAME:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy SAM Application
+    needs: [deploy-dynamodb]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - uses: aws-actions/setup-sam@v2
+      - run: sam build
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ inputs.AWS_REGION }}
+          role-to-assume: ${{ inputs.PIPELINE_EXECUTION_ROLE }}
+          role-session-name: testing-packaging
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Deploy
+        run: |
+          sam deploy \
+          --s3-bucket ${{ inputs.ARTIFACTS_BUCKET_NAME }} \
+          --no-fail-on-empty-changeset \
+          --role-arn ${{ inputs.CLOUDFORMATION_EXECUTION_ROLE }}
