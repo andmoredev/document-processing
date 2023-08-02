@@ -23,6 +23,8 @@ jobs:
   deploy-resources:
     name: Deploy SAM Resources
     needs: [lint, unit-tests]
+    permissions:
+      id-token: write
     uses: ./.github/workflows/shared-deploy.yaml
     with:
       AWS_REGION: us-east-1
