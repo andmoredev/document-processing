@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "/opt/nodejs/lambda-power-tools-utils": ["layers/lambda-powertools-utils/lambda-powertools-utils"]
+    }
+  },
+  "include": [
+    "functions/**/*.js",
+    "layers/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*"
+  ]
+}
