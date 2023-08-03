@@ -1,0 +1,9 @@
+{
+  "StartAt": "Dummy",
+  "States": {
+    "Dummy": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

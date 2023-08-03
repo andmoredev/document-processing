@@ -33,7 +33,7 @@ Resources:
         - AttributeName: sk
           AttributeType: S
 
-  ElectronicDiscoveryS3Bucket:
+  S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
@@ -42,6 +42,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
 
   APIGatewayCloudWatchRoleAccount:
     Type: AWS::ApiGateway::Account
@@ -77,6 +80,31 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: ./openapi.yaml
+
+  TextExtractionStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Type: STANDARD
+      Tracing:
+        Enabled: true
+      DefinitionUri: ./workflows/text-extraction.asl.json
+      Events:
+        StateChange:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: default
+            Pattern:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - !Ref S3Bucket
+                object:
+                  key:
+                    - suffix: .pdf
 
 Outputs:
   ApiURL:
