@@ -205,6 +205,12 @@ Resources:
       CodeUri: functions/document-text-detection-completed-handler
       Policies:
         - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - textract:GetDocumentTextDetection
+              Resource: "*"
       Events:
         DocumentTextDetectionCompletedHandlerEvent:
           Type: SNS
