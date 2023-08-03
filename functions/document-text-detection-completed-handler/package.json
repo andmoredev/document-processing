@@ -4,6 +4,9 @@
     "version": "0.0.1",
     "license": "UNLICENSED",
     "files": [
-      "index.js"
-    ]
+        "index.js"
+    ],
+    "dependencies": {
+        "pdf-lib": "^1.17.1"
+    }
 }
