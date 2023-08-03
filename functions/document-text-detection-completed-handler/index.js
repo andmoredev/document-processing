@@ -10,7 +10,9 @@ const { PDFDocument, rgb } = require('pdf-lib');
 
 exports.handler = initializePowertools(async (event) => {
   const snsMessage = JSON.parse(event.Records[0].Sns.Message);
-  const { jobId, bucketName, objectKey } = snsMessage;
+  const jobId = snsMessage.JobId;
+  const bucketName = snsMessage.DocumentLocation.S3Bucket;
+  const objectKey = snsMessage.DocumentLocation.S3ObjectName;
 
   const s3Object = await exports.getObject(bucketName, objectKey);
   const text = await this.getText(jobId);
