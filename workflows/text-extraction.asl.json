@@ -13,8 +13,8 @@
           }
         },
         "NotificationChannel": {
-          "SNSTopicArn": "${DocumentTextDetectionCompletedSnsTopic}",
-          "RoleArn": "${DocumentTextDetectionCompletedSnsTopicRole}"
+          "RoleArn": "${DocumentTextDetectionCompletedSnsTopicRole}",
+          "SNSTopicArn": "${DocumentTextDetectionCompletedSnsTopic}"
         }
       }
     }
