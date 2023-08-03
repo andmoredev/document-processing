@@ -112,6 +112,10 @@ Resources:
               Action:
                 - textract:DetectDocumentText
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub ${S3Bucket}/*
 
 Outputs:
   ApiURL:
