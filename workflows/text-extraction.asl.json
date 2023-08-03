@@ -10,10 +10,10 @@
           "S3Object": {
             "Bucket.$": "$.detail.bucket.name",
             "Name.$": "$.detail.object.key"
-          },
-          "OutputConfig": {
-            "S3Bucket.$": "$.detail.bucket.name"
           }
+        },
+        "OutputConfig": {
+          "S3Bucket.$": "$.detail.bucket.name"
         }
       }
     }
