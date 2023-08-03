@@ -14,7 +14,7 @@
         },
         "NotificationChannel": {
           "SNSTopicArn": "${DocumentTextDetectionCompletedSnsTopic}",
-          "RoleArn": "$DocumentTextDetectionCompletedSnsTopicRole{}"
+          "RoleArn": "${DocumentTextDetectionCompletedSnsTopicRole}"
         },
         "OutputConfig": {
           "S3Bucket.$": "$.detail.bucket.name"
