@@ -9,7 +9,7 @@
         "Document": {
           "S3Object": {
             "Bucket.$": "$.detail.bucket.name",
-            "Name.$": "$.detail.object.name"
+            "Name.$": "$.detail.object.key"
           }
         }
       }
