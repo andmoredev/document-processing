@@ -110,7 +110,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - textract:DetectDocumentText
+                - textract:StartDocumentTextDetection
               Resource: "*"
             - Effect: Allow
               Action:
