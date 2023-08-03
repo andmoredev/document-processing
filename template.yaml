@@ -114,7 +114,12 @@ Resources:
               Resource: "*"
             - Effect: Allow
               Action:
+                - s3:PutObject
                 - s3:GetObject
+                - s3:GetObjectTagging
+                - s3:PutObjectTagging
+                - s3:GetObjectVersion
+
               Resource: !Sub ${S3Bucket.Arn}/*
 
 Outputs:
