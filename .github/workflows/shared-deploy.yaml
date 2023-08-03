@@ -26,10 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.8"
-      - uses: aws-actions/setup-sam@v2
       - run: sam build
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v1-node16

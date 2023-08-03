@@ -115,7 +115,7 @@ Resources:
             - Effect: Allow
               Action:
                 - s3:GetObject
-              Resource: !Sub ${S3Bucket}/*
+              Resource: !Sub ${S3Bucket.Arn}/*
 
 Outputs:
   ApiURL:
