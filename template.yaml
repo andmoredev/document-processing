@@ -109,9 +109,9 @@ Resources:
         - Version: 2012-10-17
           Statement:
             - Effect: Allow
-                Action:
-                  - textract:DetectDocumentText
-                Resource: "*"
+              Action:
+                - textract:DetectDocumentText
+              Resource: "*"
 
 Outputs:
   ApiURL:
