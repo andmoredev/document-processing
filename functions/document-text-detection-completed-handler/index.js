@@ -3,5 +3,6 @@ const { initializePowertools } = process.env.LAMBDA_TASK_ROOT ?
   require('../../layers/lambda-powertools-utils/lambda-powertools-utils');
 
 exports.handler = initializePowertools(async (event) => {
+  console.log('hello world');
   return 'hello world';
 });

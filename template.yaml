@@ -12,6 +12,8 @@ Globals:
     Handler: index.handler
     Architectures:
       - arm64
+    Layers:
+      - !Ref LambdaPowertoolsLayer
 
 Resources:
   DynamoDBTable:
@@ -105,6 +107,11 @@ Resources:
                 object:
                   key:
                     - suffix: .pdf
+      DefinitionSubstitutions:
+        StartDocumentTextDetection: !Sub arn:${AWS::Partition}:states:::aws-sdk:textract:startDocumentTextDetection
+        DocumentTextDetectionCompletedSnsTopic: !Ref DocumentTextDetectionCompletedTopic
+        DocumentTextDetectionCompletedSnsTopicRole: !GetAtt DocumentTextDetectionCompletedRole.Arn
+
       Policies:
         - Version: 2012-10-17
           Statement:
@@ -121,6 +128,55 @@ Resources:
                 - s3:GetObjectVersion
 
               Resource: !Sub ${S3Bucket.Arn}/*
+
+  DocumentTextDetectionCompletedTopic:
+    Type: AWS::SNS::Topic
+
+  DocumentTextDetectionCompletedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - textract.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref DocumentTextDetectionCompletedTopic
+          PolicyName: DocumentTextDetectionCompletedPolicy
+
+  LambdaPowertoolsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Metadata:
+      BuildMethod: nodejs18.x
+    Properties:
+      LayerName: lambda-powertools-layer
+      ContentUri: layers/lambda-powertools
+      CompatibleRuntimes:
+        - nodejs18.x
+
+  DocumentTextDetectionCompletedHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/document-text-detection-completed-handler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        DocumentTextDetectionCompletedHandlerEvent:
+          Type: SNS
+          Properties:
+            Topic:
+              !Ref DocumentTextDetectionCompletedTopic
 
 Outputs:
   ApiURL:
