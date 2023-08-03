@@ -1,9 +1,18 @@
 {
-  "StartAt": "Dummy",
+  "StartAt": "DetectDocumentText",
   "States": {
-    "Dummy": {
-      "Type": "Pass",
-      "End": true
+    "DetectDocumentText": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::aws-sdk:textract:detectDocumentText",
+      "End": true,
+      "Parameters": {
+        "Document": {
+          "S3Object": {
+            "Bucket.$": "$.detail.bucket.name",
+            "Name.$": "$.detail.object.name"
+          }
+        }
+      }
     }
   }
 }
