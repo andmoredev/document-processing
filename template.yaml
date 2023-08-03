@@ -16,24 +16,24 @@ Globals:
       - !Ref LambdaPowertoolsLayer
 
 Resources:
-  DynamoDBTable:
-    Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      BillingMode: PAY_PER_REQUEST
-      PointInTimeRecoverySpecification:
-        PointInTimeRecoveryEnabled: true
-      KeySchema:
-        - AttributeName: pk
-          KeyType: HASH
-        - AttributeName: sk
-          KeyType: RANGE
-      AttributeDefinitions:
-        - AttributeName: pk
-          AttributeType: S
-        - AttributeName: sk
-          AttributeType: S
+  # DynamoDBTable:
+  #   Type: AWS::DynamoDB::Table
+  #   DeletionPolicy: Retain
+  #   UpdateReplacePolicy: Retain
+  #   Properties:
+  #     BillingMode: PAY_PER_REQUEST
+  #     PointInTimeRecoverySpecification:
+  #       PointInTimeRecoveryEnabled: true
+  #     KeySchema:
+  #       - AttributeName: pk
+  #         KeyType: HASH
+  #       - AttributeName: sk
+  #         KeyType: RANGE
+  #     AttributeDefinitions:
+  #       - AttributeName: pk
+  #         AttributeType: S
+  #       - AttributeName: sk
+  #         AttributeType: S
 
   S3Bucket:
     Type: AWS::S3::Bucket
@@ -48,86 +48,78 @@ Resources:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
 
-  APIGatewayCloudWatchRoleAccount:
-    Type: AWS::ApiGateway::Account
-    Properties:
-      CloudWatchRoleArn: !GetAtt APIGatewayCloudWatchRole.Arn
+  # APIGatewayCloudWatchRoleAccount:
+  #   Type: AWS::ApiGateway::Account
+  #   Properties:
+  #     CloudWatchRoleArn: !GetAtt APIGatewayCloudWatchRole.Arn
 
-  APIGatewayCloudWatchRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          Action: sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service: apigateway.amazonaws.com
-      Path: /
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+  # APIGatewayCloudWatchRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         Action: sts:AssumeRole
+  #         Effect: Allow
+  #         Principal:
+  #           Service: apigateway.amazonaws.com
+  #     Path: /
+  #     ManagedPolicyArns:
+  #       - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
-  Api:
-    Type: AWS::Serverless::Api
-    DependsOn: APIGatewayCloudWatchRoleAccount
-    Properties:
-      StageName: api
-      TracingEnabled: true
-      MethodSettings:
-        - HttpMethod: '*'
-          LoggingLevel: ERROR
-          ResourcePath: '/*'
-      DefinitionBody:
-        Fn::Transform:
-          Name: AWS::Include
-          Parameters:
-            Location: ./openapi.yaml
+  # Api:
+  #   Type: AWS::Serverless::Api
+  #   DependsOn: APIGatewayCloudWatchRoleAccount
+  #   Properties:
+  #     StageName: api
+  #     TracingEnabled: true
+  #     MethodSettings:
+  #       - HttpMethod: '*'
+  #         LoggingLevel: ERROR
+  #         ResourcePath: '/*'
+  #     DefinitionBody:
+  #       Fn::Transform:
+  #         Name: AWS::Include
+  #         Parameters:
+  #           Location: ./openapi.yaml
 
-  TextExtractionStateMachine:
-    Type: AWS::Serverless::StateMachine
-    Properties:
-      Type: STANDARD
-      Tracing:
-        Enabled: true
-      DefinitionUri: ./workflows/text-extraction.asl.json
-      Events:
-        StateChange:
-          Type: EventBridgeRule
-          Properties:
-            EventBusName: default
-            Pattern:
-              source:
-                - aws.s3
-              detail-type:
-                - Object Created
-              detail:
-                bucket:
-                  name:
-                    - !Ref S3Bucket
-                object:
-                  key:
-                    - suffix: .pdf
-      DefinitionSubstitutions:
-        StartDocumentTextDetection: !Sub arn:${AWS::Partition}:states:::aws-sdk:textract:startDocumentTextDetection
-        DocumentTextDetectionCompletedSnsTopic: !Ref DocumentTextDetectionCompletedTopic
-        DocumentTextDetectionCompletedSnsTopicRole: !GetAtt DocumentTextDetectionCompletedRole.Arn
-
-      Policies:
-        - Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - textract:StartDocumentTextDetection
-              Resource: "*"
-            - Effect: Allow
-              Action:
-                - s3:PutObject
-                - s3:GetObject
-                - s3:GetObjectTagging
-                - s3:PutObjectTagging
-                - s3:GetObjectVersion
-
-              Resource: !Sub ${S3Bucket.Arn}/*
+  # TextExtractionStateMachine:
+  #   Type: AWS::Serverless::StateMachine
+  #   Properties:
+  #     Type: STANDARD
+  #     Tracing:
+  #       Enabled: true
+  #     DefinitionUri: ./workflows/text-extraction.asl.json
+  #     Events:
+  #       StateChange:
+  #         Type: EventBridgeRule
+  #         Properties:
+  #           EventBusName: default
+  #           Pattern:
+  #             source:
+  #               - aws.s3
+  #             detail-type:
+  #               - Object Created
+  #             detail:
+  #               bucket:
+  #                 name:
+  #                   - !Ref S3Bucket
+  #               object:
+  #                 key:
+  #                   - suffix: .pdf
+  #     DefinitionSubstitutions:
+  #       StartDocumentTextDetection: !Sub arn:${AWS::Partition}:states:::aws-sdk:textract:startDocumentTextDetection
+  #       DocumentTextDetectionCompletedSnsTopic: !Ref DocumentTextDetectionCompletedTopic
+  #       DocumentTextDetectionCompletedSnsTopicRole: !GetAtt DocumentTextDetectionCompletedRole.Arn
+  #     Policies:
+  #       - Version: 2012-10-17
+  #         Statement:
+  #           - Effect: Allow
+  #             Action:
+  #               - lambda:InvokeFunction
+  #             Resource:
+  #               - !GetAtt StartDocumentTextDetectionFunction.Arn
+  #               - !GetAtt ValidateUserRoleAtGroupStep.Arn
 
   DocumentTextDetectionCompletedTopic:
     Type: AWS::SNS::Topic
@@ -165,6 +157,48 @@ Resources:
       CompatibleRuntimes:
         - nodejs18.x
 
+  StartDocumentTextDetectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/start-document-text-detection
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - textract:StartDocumentTextDetection
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:GetObjectTagging
+                - s3:PutObjectTagging
+                - s3:GetObjectVersion
+              Resource: !Sub ${S3Bucket.Arn}/*
+      Environment:
+        Variables:
+          DOCUMENT_TEXT_DETECTION_COMPLETED_SNS_TOPIC: !Ref DocumentTextDetectionCompletedTopic
+          DOCUMENT_TEXT_DETECTION_COMPLETED_SNS_TOPIC_ROLE: !GetAtt DocumentTextDetectionCompletedRole.Arn
+      Events:
+        StateChange:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: default
+            Pattern:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - !Ref S3Bucket
+                object:
+                  key:
+                    - suffix: .pdf
+
   DocumentTextDetectionCompletedHandlerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -178,7 +212,7 @@ Resources:
             Topic:
               !Ref DocumentTextDetectionCompletedTopic
 
-Outputs:
-  ApiURL:
-    Description: API URL
-    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/api
+# Outputs:
+#   ApiURL:
+#     Description: API URL
+#     Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/api

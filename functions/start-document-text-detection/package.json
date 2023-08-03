@@ -1,0 +1,9 @@
+{
+    "name": "test-function",
+    "description": "document-text-detection-completed-handler",
+    "version": "0.0.1",
+    "license": "UNLICENSED",
+    "files": [
+      "index.js"
+    ]
+}
