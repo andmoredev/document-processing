@@ -181,24 +181,24 @@ Resources:
         Variables:
           DOCUMENT_TEXT_DETECTION_COMPLETED_SNS_TOPIC: !Ref DocumentTextDetectionCompletedTopic
           DOCUMENT_TEXT_DETECTION_COMPLETED_SNS_TOPIC_ROLE: !GetAtt DocumentTextDetectionCompletedRole.Arn
-      Events:
-        StateChange:
-          Type: EventBridgeRule
-          Properties:
-            EventBusName: default
-            Pattern:
-              source:
-                - aws.s3
-              detail-type:
-                - Object Created
-              detail:
-                bucket:
-                  name:
-                    - !Ref S3Bucket
-                object:
-                  key:
-                    - prefix: inputs
-                    - suffix: .pdf
+      # Events:
+      #   StateChange:
+      #     Type: EventBridgeRule
+      #     Properties:
+      #       EventBusName: default
+      #       Pattern:
+      #         source:
+      #           - aws.s3
+      #         detail-type:
+      #           - Object Created
+      #         detail:
+      #           bucket:
+      #             name:
+      #               - !Ref S3Bucket
+      #           object:
+      #             key:
+      #               - prefix: inputs
+      #               - suffix: .pdf
 
   DocumentTextDetectionCompletedHandlerFunction:
     Type: AWS::Serverless::Function
