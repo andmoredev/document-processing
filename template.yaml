@@ -35,7 +35,7 @@ Resources:
   #       - AttributeName: sk
   #         AttributeType: S
 
-  S3Bucket:
+  InputS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: Private
@@ -48,40 +48,53 @@ Resources:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
 
-  # APIGatewayCloudWatchRoleAccount:
-  #   Type: AWS::ApiGateway::Account
-  #   Properties:
-  #     CloudWatchRoleArn: !GetAtt APIGatewayCloudWatchRole.Arn
+  OutputS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
 
-  # APIGatewayCloudWatchRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #         Action: sts:AssumeRole
-  #         Effect: Allow
-  #         Principal:
-  #           Service: apigateway.amazonaws.com
-  #     Path: /
-  #     ManagedPolicyArns:
-  #       - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+  APIGatewayCloudWatchRoleAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt APIGatewayCloudWatchRole.Arn
 
-  # Api:
-  #   Type: AWS::Serverless::Api
-  #   DependsOn: APIGatewayCloudWatchRoleAccount
-  #   Properties:
-  #     StageName: api
-  #     TracingEnabled: true
-  #     MethodSettings:
-  #       - HttpMethod: '*'
-  #         LoggingLevel: ERROR
-  #         ResourcePath: '/*'
-  #     DefinitionBody:
-  #       Fn::Transform:
-  #         Name: AWS::Include
-  #         Parameters:
-  #           Location: ./openapi.yaml
+  APIGatewayCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  Api:
+    Type: AWS::Serverless::Api
+    DependsOn: APIGatewayCloudWatchRoleAccount
+    Properties:
+      StageName: api
+      TracingEnabled: true
+      MethodSettings:
+        - HttpMethod: '*'
+          LoggingLevel: ERROR
+          ResourcePath: '/*'
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./openapi.yaml
 
   # TextExtractionStateMachine:
   #   Type: AWS::Serverless::StateMachine
@@ -103,7 +116,7 @@ Resources:
   #             detail:
   #               bucket:
   #                 name:
-  #                   - !Ref S3Bucket
+  #                   - !Ref InputS3Bucket
   #               object:
   #                 key:
   #                   - suffix: .pdf
@@ -176,7 +189,7 @@ Resources:
                 - s3:GetObjectTagging
                 - s3:PutObjectTagging
                 - s3:GetObjectVersion
-              Resource: !Sub ${S3Bucket.Arn}/*
+              Resource: !Sub ${InputS3Bucket.Arn}/*
       Environment:
         Variables:
           DOCUMENT_TEXT_DETECTION_COMPLETED_SNS_TOPIC: !Ref DocumentTextDetectionCompletedTopic
@@ -194,10 +207,9 @@ Resources:
       #         detail:
       #           bucket:
       #             name:
-      #               - !Ref S3Bucket
+      #               - !Ref InputS3Bucket
       #           object:
       #             key:
-      #               - prefix: inputs
       #               - suffix: .pdf
 
   DocumentTextDetectionCompletedHandlerFunction:
@@ -220,8 +232,10 @@ Resources:
                 - s3:GetObjectTagging
                 - s3:PutObjectTagging
               Resource:
-                - !GetAtt S3Bucket.Arn
-                - !Sub ${S3Bucket.Arn}/*
+                - !GetAtt InputS3Bucket.Arn
+                - !Sub ${InputS3Bucket.Arn}/*
+                - !GetAtt OutputS3Bucket.Arn
+                - !Sub ${OutputS3Bucket.Arn}/*
       Events:
         DocumentTextDetectionCompletedHandlerEvent:
           Type: SNS
@@ -229,7 +243,7 @@ Resources:
             Topic:
               !Ref DocumentTextDetectionCompletedTopic
 
-# Outputs:
-#   ApiURL:
-#     Description: API URL
-#     Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/api
+Outputs:
+  ApiURL:
+    Description: API URL
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/api

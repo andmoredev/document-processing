@@ -24,5 +24,6 @@ exports.handler = initializePowertools(async (event) => {
 
   const response = await textractClient.send(command);
 
+  console.log('JobId', response.JobId);
   return response.JobId;
 });
