@@ -242,6 +242,9 @@ Resources:
           Properties:
             Topic:
               !Ref DocumentTextDetectionCompletedTopic
+      Environment:
+        Variables:
+          OUTPUT_BUCKET_NAME: !Ref OutputS3Bucket
 
 Outputs:
   ApiURL:

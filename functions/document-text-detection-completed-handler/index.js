@@ -11,10 +11,10 @@ const { PDFDocument, rgb } = require('pdf-lib');
 exports.handler = initializePowertools(async (event) => {
   const snsMessage = JSON.parse(event.Records[0].Sns.Message);
   const jobId = snsMessage.JobId;
-  const bucketName = snsMessage.DocumentLocation.S3Bucket;
+  const inputBucketName = snsMessage.DocumentLocation.S3Bucket;
   const objectKey = snsMessage.DocumentLocation.S3ObjectName;
 
-  const s3Object = await exports.getObject(bucketName, objectKey);
+  const s3Object = await exports.getObject(inputBucketName, objectKey);
   const text = await this.getText(jobId);
   const textBlocks = this.parseTextBlocks(text);
 
@@ -51,7 +51,7 @@ exports.handler = initializePowertools(async (event) => {
   page.addLayer(textLayer);
 
   const modifiedPdfBytes = await pdfDoc.save();
-  exports.saveModifiedObject(bucketName, objectKey, modifiedPdfBytes);
+  exports.saveModifiedObject(objectKey, modifiedPdfBytes);
 
   return 'hello world';
 });
@@ -70,12 +70,14 @@ exports.getObject = async (bucketName, objectKey) => {
     Key: objectKey
   });
 
+  console.log('command', command);
+
   return await s3Client.send(command);
 };
 
-exports.saveModifiedObject = async (bucketName, objectKey, fileContent) => {
+exports.saveModifiedObject = async (objectKey, fileContent) => {
   const command = new PutObjectCommand({
-    Bucket: bucketName,
+    Bucket: process.env.OUTPUT_BUCKET_NAME,
     Key: `ocrd-${objectKey}`,
     Body: fileContent
   });
