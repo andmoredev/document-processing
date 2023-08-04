@@ -7,6 +7,7 @@ const textractClient = new TextractClient();
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const s3Client = new S3Client();
 const { PDFDocument, rgb } = require('pdf-lib');
+const { Readable } = require('stream');
 
 exports.handler = initializePowertools(async (event) => {
   const snsMessage = JSON.parse(event.Records[0].Sns.Message);
@@ -18,7 +19,8 @@ exports.handler = initializePowertools(async (event) => {
   const text = await this.getText(jobId);
   const textBlocks = this.parseTextBlocks(text);
 
-  const pdfDoc = await PDFDocument.load(s3Object.Body);
+  const pdfStream = Readable.from(s3Object.Body);
+  const pdfDoc = await PDFDocument.load(pdfStream);
   const [page] = pdfDoc.getPages();
 
   const pageWidth = page.getWidth();
@@ -70,8 +72,6 @@ exports.getObject = async (bucketName, objectKey) => {
     Key: objectKey
   });
 
-  console.log('command', command);
-
   return await s3Client.send(command);
 };
 
@@ -86,7 +86,7 @@ exports.saveModifiedObject = async (objectKey, fileContent) => {
 };
 
 exports.parseTextBlocks = (textractResponse) => {
-  const textBlocks = textractResponse.filter((block) => block.BlockType === 'WORD');
+  const textBlocks = textractResponse.Blocks.filter((block) => block.BlockType === 'WORD');
 
   return textBlocks.map((block) => {
     const { Text, Geometry } = block;

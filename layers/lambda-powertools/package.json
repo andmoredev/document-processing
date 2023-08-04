@@ -8,6 +8,7 @@
     "@aws-lambda-powertools/metrics": "^1.2.1",
     "@aws-lambda-powertools/tracer": "^1.2.1",
     "@middy/core": "^3.5.0",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "stream": "^0.0.2"
   }
 }
