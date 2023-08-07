@@ -2,12 +2,11 @@ const { initializePowertools } = process.env.LAMBDA_TASK_ROOT ?
   require('/opt/nodejs/lambda-powertools') :
   require('../../layers/lambda-powertools/lambda-powertools');
 
-const { TextractClient, GetDocumentTextDetectionCommand, PutObjectCommand } = require('@aws-sdk/client-textract');
+const { TextractClient, GetDocumentTextDetectionCommand } = require('@aws-sdk/client-textract');
 const textractClient = new TextractClient();
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const s3Client = new S3Client();
-const { PDFDocument, rgb } = require('pdf-lib');
-const { Readable } = require('stream');
+const { PDFDocument, rgb, StandardFonts, numberToString } = require('pdf-lib');
 
 exports.handler = initializePowertools(async (event) => {
   const snsMessage = JSON.parse(event.Records[0].Sns.Message);
@@ -16,44 +15,44 @@ exports.handler = initializePowertools(async (event) => {
   const objectKey = snsMessage.DocumentLocation.S3ObjectName;
 
   const s3Object = await exports.getObject(inputBucketName, objectKey);
-  const text = await this.getText(jobId);
-  const textBlocks = this.parseTextBlocks(text);
 
-  const pdfStream = Readable.from(s3Object.Body);
+  const pdfStream = await exports.streamToBuffer(s3Object.Body);
   const pdfDoc = await PDFDocument.load(pdfStream);
-  const [page] = pdfDoc.getPages();
+
+  const pages = pdfDoc.getPages();
 
   const pageWidth = page.getWidth();
   const pageHeight = page.getHeight();
 
-  const textLayer = pdfDoc.createLayer('text');
-  const textFont = await pdfDoc.embedFont(PDFDocument.Font.Helvetica);
+  const text = await this.getText(jobId);
+  const textBlocks = this.parseTextBlocks(text, pageHeight);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  for (const { Text, Left, Top, Width, Height } of textBlocks) {
-    const textX = Left * pageWidth;
-    const textY = Top * pageHeight;
-    const textWidth = Width * pageWidth;
-    const textHeight = Height * pageHeight;
+  for (const block of textBlocks) {
+    const text = block.Text;
+    const left = block.Left;
+    const top = block.Top;
+    const width = block.Width;
+    const height = block.Height;
+    const fontSize = block.Size;
 
-    const textOptions = {
-      font: textFont,
-      size: 12,
-      color: rgb(0, 0, 0)
-    };
+    console.log(`Text: "${text}", Left: ${left}, Top: ${top}, Width: ${width}, Height: ${height}`);
 
-    textLayer.drawText(Text, {
+
+    const textX = left * pageWidth;
+    const textY = (1 - top) * pageHeight - 2; // Adjust for inverted Y-axis
+
+    page.drawText(text, {
       x: textX,
       y: textY,
-      width: textWidth,
-      height: textHeight,
-      ...textOptions
+      font,
+      size: fontSize,
+      color: rgb(1, 0, 0)
     });
   }
 
-  page.addLayer(textLayer);
-
   const modifiedPdfBytes = await pdfDoc.save();
-  exports.saveModifiedObject(objectKey, modifiedPdfBytes);
+  await exports.saveModifiedObject(objectKey, modifiedPdfBytes);
 
   return 'hello world';
 });
@@ -85,7 +84,7 @@ exports.saveModifiedObject = async (objectKey, fileContent) => {
   await s3Client.send(command);
 };
 
-exports.parseTextBlocks = (textractResponse) => {
+exports.parseTextBlocks = (textractResponse, pageHeight) => {
   const textBlocks = textractResponse.Blocks.filter((block) => block.BlockType === 'WORD');
 
   return textBlocks.map((block) => {
@@ -93,16 +92,45 @@ exports.parseTextBlocks = (textractResponse) => {
     const { Left, Top, Width, Height } = Geometry.BoundingBox;
 
     // Normalize the coordinates to values between 0 and 1
-    const normalizedLeft = Left;
-    const normalizedTop = 1 - Top - Height;
-    const normalizedWidth = Width;
-    const normalizedHeight = Height;
+    // const normalizedLeft = Left;
+    // const normalizedTop = 1 - Top - Height;
+    // const normalizedWidth = Width;
+    // const normalizedHeight = Height;
 
     return {
-      Text, Left: normalizedLeft,
-      Top: normalizedTop,
-      Width: normalizedWidth,
-      Height: normalizedHeight
+      Text,
+      Left,
+      Top,
+      Width,
+      Height,
+      Size: Height * pageHeight * 1.5
     };
   });
 };
+
+exports.streamToBuffer = async (stream) => {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+};
+
+exports.calculateFontSize = (text, maxWidth, maxHeight, font) => {
+  let fontSize = 12; // Starting font size
+
+  while (fontSize > 1) {
+    const width = font.widthOfTextAtSize(text, fontSize);
+    const height = font.heightAtSize(fontSize);
+
+    if (width <= maxWidth && height <= maxHeight) {
+      break;
+    }
+
+    fontSize -= 1;
+  }
+
+  return fontSize;
+};
+

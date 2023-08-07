@@ -8,6 +8,10 @@
   },
   "rules": {
     "max-len": [
+      "warn",
+      {
+        "code": 150
+      },
       "error",
       {
         "ignoreStrings": true
