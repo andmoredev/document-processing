@@ -11,10 +11,6 @@
       "warn",
       {
         "code": 150
-      },
-      "error",
-      {
-        "ignoreStrings": true
       }
     ],
     "func-style": [
