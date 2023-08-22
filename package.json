@@ -28,11 +28,7 @@
     "sinon": "^14.0.0"
   },
   "scripts": {
-    "test": "mocha functions/*/tests/*.js",
-    "coverage": "c8 npm test",
     "lint": "eslint {**,.}/*.js --no-error-on-unmatched-pattern",
-    "portman": "portman --cliOptionsFile portman/portman-cli.json",
-    "generate-implemented-endpoint-report": "node tools/generate-implemented-endpoints-report/index.js",
     "deploy": "sam build --cached --parallel && sam deploy --no-fail-on-empty-changeset"
   }
 }
