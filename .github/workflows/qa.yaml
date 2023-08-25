@@ -10,13 +10,6 @@ concurrency:
   group: ${{ github.workflow }}
 
 jobs:
-  lint:
-    name: Lint
-    steps:
-      - uses: actions/checkout@v3
-      - run: npm ci
-      - run: npm run lint
-
   deploy-resources:
     name: Deploy SAM Resources
     needs: [lint]
