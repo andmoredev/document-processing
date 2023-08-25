@@ -15,7 +15,22 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    uses: ./.github/workflows/shared-deploy.yaml
-    with:
-      WORKFLOW_ENV: qa
-    secrets: inherit
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.WORKFLOW_ENV }}
+    steps:
+      - uses: actions/checkout@v3
+      - run: sam build
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.PIPELINE_EXECUTION_ROLE }}
+          role-session-name: testing-packaging
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Deploy
+        run: |
+          sam deploy \
+          --s3-bucket ${{ vars.ARTIFACTS_BUCKET_NAME }} \
+          --no-fail-on-empty-changeset \
+          --role-arn ${{ secrets.CLOUDFORMATION_EXECUTION_ROLE }}
