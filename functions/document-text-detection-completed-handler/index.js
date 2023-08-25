@@ -21,8 +21,8 @@ exports.handler = initializePowertools(async (event) => {
 
   const pages = pdfDoc.getPages();
 
-  const pageWidth = page.getWidth();
-  const pageHeight = page.getHeight();
+  const pageWidth = pages[0].getWidth();
+  const pageHeight = pages[0].getHeight();
 
   const text = await this.getText(jobId);
   const textBlocks = this.parseTextBlocks(text, pageHeight);
@@ -42,7 +42,7 @@ exports.handler = initializePowertools(async (event) => {
     const textX = left * pageWidth;
     const textY = (1 - top) * pageHeight - 2; // Adjust for inverted Y-axis
 
-    page.drawText(text, {
+    pages[0].drawText(text, {
       x: textX,
       y: textY,
       font,
@@ -133,4 +133,3 @@ exports.calculateFontSize = (text, maxWidth, maxHeight, font) => {
 
   return fontSize;
 };
-
