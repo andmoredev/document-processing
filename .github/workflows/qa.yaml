@@ -12,7 +12,6 @@ concurrency:
 jobs:
   deploy-resources:
     name: Deploy SAM Resources
-    needs: [lint]
     permissions:
       id-token: write
       contents: read
