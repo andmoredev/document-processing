@@ -16,7 +16,7 @@ jobs:
       id-token: write
       contents: read
     runs-on: ubuntu-latest
-    environment: ${{ inputs.WORKFLOW_ENV }}
+    environment: QA
     steps:
       - uses: actions/checkout@v3
       - run: sam build
