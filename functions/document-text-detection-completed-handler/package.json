@@ -5,5 +5,8 @@
     "license": "UNLICENSED",
     "files": [
         "index.js"
-    ]
+    ],
+    "dependencies": {
+        "jsonpath-plus": "^7.2.0"
+    }
 }

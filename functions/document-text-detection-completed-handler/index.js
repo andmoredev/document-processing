@@ -6,7 +6,8 @@ const { TextractClient, GetDocumentTextDetectionCommand } = require('@aws-sdk/cl
 const textractClient = new TextractClient();
 const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const s3Client = new S3Client();
-const { PDFDocument, rgb, StandardFonts, numberToString } = require('pdf-lib');
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { JSONPath: jsonPath } = require('jsonpath-plus');
 
 exports.handler = initializePowertools(async (event) => {
   const snsMessage = JSON.parse(event.Records[0].Sns.Message);
@@ -25,31 +26,32 @@ exports.handler = initializePowertools(async (event) => {
   const pageHeight = pages[0].getHeight();
 
   const text = await this.getText(jobId);
-  const textBlocks = this.parseTextBlocks(text, pageHeight);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const blocks = this.parseTextBlocks(text, pageHeight);
+  const customFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
 
-  for (const block of textBlocks) {
-    const text = block.Text;
-    const left = block.Left;
-    const top = block.Top;
-    const width = block.Width;
-    const height = block.Height;
-    const fontSize = block.Size;
-
-    console.log(`Text: "${text}", Left: ${left}, Top: ${top}, Width: ${width}, Height: ${height}`);
-
-
-    const textX = left * pageWidth;
-    const textY = (1 - top) * pageHeight - 2; // Adjust for inverted Y-axis
-
-    pages[0].drawText(text, {
-      x: textX,
-      y: textY,
-      font,
-      size: fontSize,
-      color: rgb(1, 0, 0)
+  pages.forEach((page, index) => {
+    const textractWords = jsonPath({
+      path: `$[?(@.BlockType == "WORD" && @.Page == ${index + 1})])]`,
+      json: blocks
     });
-  }
+
+    const { width: pageWidth, height: pageHeight } = page.getSize();
+
+    textractWords.forEach((word) => {
+      const left = word.Geometry.BoundingBox.Left * pageWidth;
+      const top = (1 - word.Geometry.BoundingBox.Top) * pageHeight + 2;
+      const width = word.Geometry.BoundingBox.Width * pageWidth;
+      const height = word.Geometry.BoundingBox.Height * pageHeight;
+      const font = this.calculateFontSize(word.Text, word.Geometry.BoundingBox.Width * pageWidth, customFont);
+      page.drawText(word.Text, {
+        x: left,
+        y: top - height,
+        size: font.fontSize,
+        color: rgb(0.0, 0.0, 0.0),
+        opacity: 0
+      });
+    });
+  });
 
   const modifiedPdfBytes = await pdfDoc.save();
   await exports.saveModifiedObject(objectKey, modifiedPdfBytes);
